@@ -15,7 +15,7 @@ main(int argc, char *argv[])
         goto out;
     }
 
-    files = calloc(sizeof(int *), (argc - 1));
+    files = calloc(argc - 1, sizeof(int *));
     if (!files) {
         retval = ENOMEM;
         goto out;
@@ -24,21 +24,25 @@ main(int argc, char *argv[])
     for (int i = 0; i < argc - 1; i++) {
         FILE *fp;
 
-        files[i] = calloc(STD_BUFSIZE, sizeof(char));
+        files[i] = calloc(sizeof(char), STD_BUFSIZE);
         if (!files[i]) {
             retval = ENOMEM;
             goto bufallocfail;
         }
 
-        fp = fopen(argv[i], "r");
+        fp = fopen(argv[i+1], "r");
+        if (!fp) {
+            retval = EIO;
+            goto readfail;
+        }
         fclose(fp);
     }
 
+readfail:
 bufallocfail:
-    for (int i = 0; i < argc - 1; i++) {
+    for (int i = 0; i < argc - 1; i++)
         if (files[i])
             free((int *)files[i]);
-    }
     free(files);
 out:
     return retval;
