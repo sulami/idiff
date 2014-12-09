@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define STD_BUFSIZE 128
+#define STD_BUFSIZE 1
 
 int
 main(int argc, char *argv[])
