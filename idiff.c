@@ -27,7 +27,7 @@ main(int argc, char *argv[])
         int bufsize = STD_BUFSIZE;
         int bufleft = STD_BUFSIZE;
 
-        files[i] = calloc(sizeof(char *), STD_BUFSIZE);
+        files[i] = malloc(sizeof(char *) * STD_BUFSIZE);
         if (!files[i]) {
             retval = ENOMEM;
             goto bufallocfail;
