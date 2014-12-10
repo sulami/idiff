@@ -3,13 +3,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define STD_BUFSIZE 1
+#define STD_BUFSIZE 4096
 
 int
 main(int argc, char *argv[])
 {
     char **files;
     int retval = 0;
+    unsigned int maxsize = 0;
 
     if (argc < 3) {
         retval = EINVAL;
@@ -22,12 +23,13 @@ main(int argc, char *argv[])
         goto out;
     }
 
-    for (int i = 0; i < argc - 1; i++) {
+    for (unsigned int i = 0; i < argc - 1; i++) {
         FILE *fp;
-        int bufsize = STD_BUFSIZE;
-        int bufleft = STD_BUFSIZE;
+        unsigned int bufsize = STD_BUFSIZE;
+        unsigned int bufleft = STD_BUFSIZE;
+        unsigned int read;
 
-        files[i] = malloc(sizeof(char *) * STD_BUFSIZE);
+        files[i] = malloc(sizeof(char) * STD_BUFSIZE);
         if (!files[i]) {
             retval = ENOMEM;
             goto bufallocfail;
@@ -39,17 +41,19 @@ main(int argc, char *argv[])
             goto readfail;
         }
 
-        while (fgets(files[i], bufsize, fp)) {
-            if (bufleft < 2) {
+        while ((read = fread(files[i], sizeof(char), bufleft, fp))) {
+            bufleft -= read;
+            if (!bufleft) {
                 bufsize += STD_BUFSIZE;
-                files[i] = realloc(files[i], bufsize);
+                bufleft += STD_BUFSIZE;
+                files[i] = realloc(files[i], sizeof(char) * bufsize);
                 if (!files[i]) {
                     retval = ENOMEM;
                     goto bufallocfail;
                 }
             }
-            printf("%s", files[i]);
-            bufleft -= strlen(files[i]);
+            if (bufsize > maxsize)
+                maxsize = bufsize;
         }
 
         fclose(fp);
@@ -57,7 +61,7 @@ main(int argc, char *argv[])
 
 readfail:
 bufallocfail:
-    for (int i = 0; i < argc - 1; i++)
+    for (unsigned int i = 0; i < argc - 1; i++)
         if (files[i])
             free(files[i]);
     free(files);
