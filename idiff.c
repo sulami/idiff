@@ -18,7 +18,7 @@ main(int argc, char *argv[])
         goto out;
     }
 
-    fps = malloc((argc - 1) * sizeof(FILE *));
+    fps = calloc(argc - 1, sizeof(FILE *));
     if (!fps) {
         retval = ENOMEM;
         goto out;
@@ -31,10 +31,6 @@ main(int argc, char *argv[])
     }
 
     for (unsigned int i = 0; i < argc - 1; i++) {
-        unsigned int bufsize = STD_BUFSIZE;
-        unsigned int bufleft = STD_BUFSIZE;
-        unsigned int read;
-
         files[i] = malloc(sizeof(char) * STD_BUFSIZE);
         if (!files[i]) {
             retval = ENOMEM;
@@ -46,6 +42,12 @@ main(int argc, char *argv[])
             retval = EIO;
             goto readfail;
         }
+    }
+
+    for (unsigned int i = 0; i < argc - 1; i++) {
+        unsigned int bufsize = STD_BUFSIZE;
+        unsigned int bufleft = STD_BUFSIZE;
+        unsigned int read;
 
         while ((read = fread(files[i], sizeof(char), bufleft, fps[i]))) {
             bufleft -= read;
@@ -61,15 +63,16 @@ main(int argc, char *argv[])
             if (bufsize > maxsize)
                 maxsize = bufsize;
         }
-
-        fclose(fps[i]);
     }
 
 readfail:
 bufallocfail:
-    for (unsigned int i = 0; i < argc - 1; i++)
+    for (unsigned int i = 0; i < argc - 1; i++) {
+        if (fps[i] != NULL)
+            fclose(fps[i]);
         if (files[i])
             free(files[i]);
+    }
     free(files);
 fpallocfail:
     free(fps);
