@@ -1,81 +1,80 @@
 #include <errno.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#define STD_BUFSIZE 4096
+#define STD_BUFSIZE 256
+
+struct file {
+    FILE *fp;
+    char *buf;
+    bool reading;
+};
 
 int
 main(int argc, char *argv[])
 {
-    FILE **fps;
-    char **files;
     int retval = 0;
-    unsigned int maxsize = 0;
+    struct file *files;
+    bool done = false;
 
     if (argc < 3) {
         retval = EINVAL;
         goto out;
     }
 
-    fps = calloc(argc - 1, sizeof(FILE *));
-    if (!fps) {
+    files = malloc((argc - 1) * sizeof(struct file));
+    if (!files) {
         retval = ENOMEM;
         goto out;
     }
 
-    files = calloc(argc - 1, sizeof(char *));
-    if (!files) {
-        retval = ENOMEM;
-        goto fpallocfail;
-    }
-
     for (unsigned int i = 0; i < argc - 1; i++) {
-        files[i] = malloc(sizeof(char) * STD_BUFSIZE);
-        if (!files[i]) {
+        files[i].reading = true;
+        files[i].buf = malloc(sizeof(char) * STD_BUFSIZE);
+        if (!files[i].buf) {
             retval = ENOMEM;
             goto bufallocfail;
         }
 
-        fps[i] = fopen(argv[i+1], "r");
-        if (fps[i] == NULL) {
+        files[i].fp = fopen(argv[i+1], "r");
+        if (files[i].fp == NULL) {
             retval = EIO;
             goto readfail;
         }
     }
 
-    for (unsigned int i = 0; i < argc - 1; i++) {
-        unsigned int bufsize = STD_BUFSIZE;
-        unsigned int bufleft = STD_BUFSIZE;
-        unsigned int read;
+    while (!done) {
+        for (unsigned int i = 0; i < argc - 1; i++) {
+            fgets(files[i].buf, STD_BUFSIZE, files[i].fp);
+            /* TODO advance in lines and figure out when to stop on this file */
+            if (!files[i].buf)
+                files[i].reading = false;
+        }
 
-        while ((read = fread(files[i], sizeof(char), bufleft, fps[i]))) {
-            bufleft -= read;
-            if (!bufleft) {
-                bufsize += STD_BUFSIZE;
-                bufleft += STD_BUFSIZE;
-                files[i] = realloc(files[i], sizeof(char) * bufsize);
-                if (!files[i]) {
-                    retval = ENOMEM;
-                    goto bufallocfail;
-                }
+        /* TODO compare the lines */
+
+        done = true;
+        for (unsigned int i = 0; i < argc - 1; i++) {
+            if (files[i].reading) {
+                done = false;
+                break;
             }
-            if (bufsize > maxsize)
-                maxsize = bufsize;
         }
     }
 
 readfail:
 bufallocfail:
-    for (unsigned int i = 0; i < argc - 1; i++) {
-        if (fps[i] != NULL)
-            fclose(fps[i]);
-        if (files[i])
-            free(files[i]);
+    if (files) {
+        for (unsigned int i = 0; i < argc - 1; i++) {
+            if (files[i].fp)
+                fclose(files[i].fp);
+            if (files[i].buf)
+                free(files[i].buf);
+        }
+        free(files);
     }
-    free(files);
-fpallocfail:
-    free(fps);
 out:
     return retval;
 }
