@@ -3,21 +3,32 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "list.h"
 
 #define STD_BUFSIZE 256
 
 struct file {
     FILE *fp;
-    char *buf;
+    struct list_head *lines;
     bool reading;
 };
 
-int
-main(int argc, char *argv[])
+static void readline(struct file *f)
+{
+    char *line;
+
+    line = calloc(STD_BUFSIZE, sizeof(char));
+    if (!line)
+        return;
+
+    f->lines = list_add(f->lines, line);
+    f->reading = fgets(line, STD_BUFSIZE, f->fp) ? true : false;
+}
+
+int main(int argc, char *argv[])
 {
     int retval = 0;
     struct file *files;
-    bool done = false;
 
     if (argc < 3) {
         retval = EINVAL;
@@ -32,11 +43,7 @@ main(int argc, char *argv[])
 
     for (unsigned int i = 0; i < argc - 1; i++) {
         files[i].reading = true;
-        files[i].buf = malloc(sizeof(char) * STD_BUFSIZE);
-        if (!files[i].buf) {
-            retval = ENOMEM;
-            goto bufallocfail;
-        }
+        files[i].lines = NULL;
 
         files[i].fp = fopen(argv[i+1], "r");
         if (files[i].fp == NULL) {
@@ -45,33 +52,18 @@ main(int argc, char *argv[])
         }
     }
 
-    while (!done) {
-        for (unsigned int i = 0; i < argc - 1; i++) {
-            fgets(files[i].buf, STD_BUFSIZE, files[i].fp);
-            /* TODO advance in lines and figure out when to stop on this file */
-            if (!files[i].buf)
-                files[i].reading = false;
-        }
+    for (unsigned int i = 0; i < argc - 1; i++)
+        while (files[i].reading)
+            readline(&files[i]);
 
-        /* TODO compare the lines */
-
-        done = true;
-        for (unsigned int i = 0; i < argc - 1; i++) {
-            if (files[i].reading) {
-                done = false;
-                break;
-            }
-        }
-    }
+    /* TODO compare the lines */
 
 readfail:
-bufallocfail:
     if (files) {
         for (unsigned int i = 0; i < argc - 1; i++) {
             if (files[i].fp)
                 fclose(files[i].fp);
-            if (files[i].buf)
-                free(files[i].buf);
+            list_delete(files[i].lines);
         }
         free(files);
     }
