@@ -5,7 +5,7 @@
 #include <string.h>
 #include "list.h"
 
-#define STD_BUFSIZE 256
+#define STD_BUFSIZE 256 /* max length of lines */
 
 struct file {
     FILE *fp;
