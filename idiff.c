@@ -56,7 +56,16 @@ int main(int argc, char *argv[])
         while (files[i].reading)
             readline(&files[i]);
 
-    /* TODO compare the lines */
+    for (unsigned int i = 0; i < argc - 2; i++) {
+        for (unsigned int j = i + 1; j < argc - 1; j++) {
+            char *lone = files[i].lines->payload;
+            char *ltwo = files[j].lines->payload;
+
+            if (strcmp(lone, ltwo)) {
+                /* TODO advance in lines */
+            }
+        }
+    }
 
 readfail:
     if (files) {
