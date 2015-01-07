@@ -38,7 +38,7 @@ static void printline(char *left, char *right)
 
     if (left) {
         l = strlen(left);
-        if (left[l-1] == '\n')
+        if (l && left[l-1] == '\n')
             left[l-1] = ' ';
         fputs(left, stdout);
     }
@@ -49,7 +49,7 @@ static void printline(char *left, char *right)
 
     if (right) {
         l = strlen(right);
-        if (right[l-1] == '\n')
+        if (l && right[l-1] == '\n')
             right[l-1] = ' ';
         fputs(right, stdout);
     }
