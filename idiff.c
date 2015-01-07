@@ -6,6 +6,7 @@
 #include "list.h"
 
 #define STD_BUFSIZE 256 /* max length of lines */
+#define SEARCH_LEN 10 /* how many lines we will look ahead for insertions */
 
 #define MAX(x,y) (x >= y ? x : y)
 
@@ -27,61 +28,91 @@ static void readline(struct file *f)
     f->reading = fgets(line, STD_BUFSIZE, f->fp) ? true : false;
 }
 
+static void printline(char *left, char *right)
+{
+    if (left) {
+        unsigned int l = strlen(left);
+        if (left[l-1] == '\n')
+            left[l-1] = 0;
+        fputs(left, stdout);
+    }
+
+    /* TODO properly calculate the mid */
+    fputs(" | ", stdout);
+
+    if (right) {
+        unsigned int l = strlen(right);
+        if (right[l-1] == '\n')
+            right[l-1] = 0;
+        fputs(right, stdout);
+    }
+
+    fputs("\n", stdout);
+}
+
 static int compfiles(struct file fone, struct file ftwo)
 {
     struct list_head *lone = fone.lines;
     struct list_head *ltwo = ftwo.lines;
-    bool end = false;
+    bool dupli = false, end = false;
 
     while (!end) {
-        if(!strcmp(lone->payload, ltwo->payload)) { /* match */
-            if (lone->next)
-                lone = lone->next;
-            else /* TODO print rest */
-                end = true;
-            if (ltwo->next)
-                ltwo = ltwo->next;
-            else /* TODO print rest */
-                end = true;
-        } else { /* no match */
-            unsigned int len = MAX(list_length(lone), list_length(ltwo));
-            bool found = false;
+        if(strcmp(lone->payload, ltwo->payload)) { /* no match */
             struct list_head *lonen = lone;
             struct list_head *ltwon = ltwo;
 
             /* try to figure out if we have additional lines added */
-            for (unsigned int i = 0; i < len; i++) {
-                if (i < list_length(lone) - 1) {
+            for (unsigned int i = 0; i < SEARCH_LEN; i++) {
+                if (lonen->next) {
                     lonen = lonen->next;
                     if (!strcmp(lonen->payload, ltwo->payload)) {
-                        lone = lonen;
-                        found = true;
+                        while (lone != lonen) {
+                            printline(lone->payload, NULL);
+                            lone = lone->next;
+                        }
+                        dupli = true;
                         break;
                     }
                 }
-                if (i < list_length(ltwo) - 1) {
+                if (ltwon->next) {
                     ltwon = ltwon->next;
                     if (!strcmp(lone->payload, ltwon->payload)) {
-                        ltwo = ltwon;
-                        found = true;
+                        while (ltwo != ltwon) {
+                            printline(NULL, ltwo->payload);
+                            ltwo = ltwo->next;
+                        }
+                        dupli = true;
                         break;
                     }
                 }
             }
 
-            if (!found) { /* advance both lines */
-                /* TODO print both lines */
-                if (lone->next)
-                    lone = lone->next;
-                else /* print rest */
-                    end = true;
-                if (ltwo->next)
-                    ltwo = ltwo->next;
-                else /* print rest */
-                    end = true;
+            if (!dupli)
+                printline(lone->payload, ltwo->payload);
+            dupli = false;
+        }
+
+        if (lone->next) {
+            lone = lone->next;
+        } else {
+            end = true;
+            while(ltwo->next) {
+                ltwo = ltwo->next;
+                printline(NULL, ltwo->payload);
+            }
+        }
+        if (ltwo->next) {
+            ltwo = ltwo->next;
+        } else {
+            end = true;
+            while(lone->next) {
+                lone = lone->next;
+                printline(lone->payload, NULL);
             }
         }
     }
+
+    puts("\n");
 
     return 0;
 }
