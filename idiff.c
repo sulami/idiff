@@ -7,6 +7,8 @@
 
 #define STD_BUFSIZE 256 /* max length of lines */
 
+#define MAX(x,y) (x >= y ? x : y)
+
 struct file {
     FILE *fp;
     struct list_head *lines;
@@ -29,9 +31,57 @@ static int compfiles(struct file fone, struct file ftwo)
 {
     struct list_head *lone = fone.lines;
     struct list_head *ltwo = ftwo.lines;
+    bool end = false;
 
-    /* TODO advance in files in different styles */
-    strcmp(lone->payload, ltwo->payload);
+    while (!end) {
+        if(!strcmp(lone->payload, ltwo->payload)) { /* match */
+            if (lone->next)
+                lone = lone->next;
+            else /* TODO print rest */
+                end = true;
+            if (ltwo->next)
+                ltwo = ltwo->next;
+            else /* TODO print rest */
+                end = true;
+        } else { /* no match */
+            unsigned int len = MAX(list_length(lone), list_length(ltwo));
+            bool found = false;
+            struct list_head *lonen = lone;
+            struct list_head *ltwon = ltwo;
+
+            /* try to figure out if we have additional lines added */
+            for (unsigned int i = 0; i < len; i++) {
+                if (i < list_length(lone) - 1) {
+                    lonen = lonen->next;
+                    if (!strcmp(lonen->payload, ltwo->payload)) {
+                        lone = lonen;
+                        found = true;
+                        break;
+                    }
+                }
+                if (i < list_length(ltwo) - 1) {
+                    ltwon = ltwon->next;
+                    if (!strcmp(lone->payload, ltwon->payload)) {
+                        ltwo = ltwon;
+                        found = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!found) { /* advance both lines */
+                /* TODO print both lines */
+                if (lone->next)
+                    lone = lone->next;
+                else /* print rest */
+                    end = true;
+                if (ltwo->next)
+                    ltwo = ltwo->next;
+                else /* print rest */
+                    end = true;
+            }
+        }
+    }
 
     return 0;
 }
