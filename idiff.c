@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/ioctl.h>
 #include "list.h"
 
 #define STD_BUFSIZE 256 /* max length of lines */
@@ -30,18 +31,24 @@ static void readline(struct file *f)
 
 static void printline(char *left, char *right)
 {
+    struct winsize w;
+    unsigned int l = 1;
+
+    ioctl(0, TIOCGWINSZ, &w);
+
     if (left) {
-        unsigned int l = strlen(left);
+        l = strlen(left);
         if (left[l-1] == '\n')
             left[l-1] = 0;
         fputs(left, stdout);
     }
 
-    /* TODO properly calculate the mid */
-    fputs(" | ", stdout);
+    for (unsigned int i = 0; i < (w.ws_col / 2) - l; i++)
+        fputs(" ", stdout);
+    fputs("| ", stdout);
 
     if (right) {
-        unsigned int l = strlen(right);
+        l = strlen(right);
         if (right[l-1] == '\n')
             right[l-1] = 0;
         fputs(right, stdout);
