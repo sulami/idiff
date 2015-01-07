@@ -32,25 +32,27 @@ static void readline(struct file *f)
 static void printline(char *left, char *right)
 {
     struct winsize w;
-    unsigned int l = 1;
+    unsigned int l = 0;
 
     ioctl(0, TIOCGWINSZ, &w);
+
+    fputs(" ", stdout);
 
     if (left) {
         l = strlen(left);
         if (left[l-1] == '\n')
-            left[l-1] = 0;
+            left[l-1] = ' ';
         fputs(left, stdout);
     }
 
-    for (unsigned int i = 0; i < (w.ws_col / 2) - l; i++)
+    for (unsigned int i = 0; i < w.ws_col / 2 - l - 2; i++)
         fputs(" ", stdout);
     fputs("| ", stdout);
 
     if (right) {
         l = strlen(right);
         if (right[l-1] == '\n')
-            right[l-1] = 0;
+            right[l-1] = ' ';
         fputs(right, stdout);
     }
 
@@ -156,6 +158,7 @@ int main(int argc, char *argv[])
             struct file fone = files[i];
             struct file ftwo = files[j];
 
+            printline(argv[i+1], argv[j+1]);
             compfiles(fone, ftwo);
         }
     }
