@@ -25,6 +25,17 @@ static void readline(struct file *f)
     f->reading = fgets(line, STD_BUFSIZE, f->fp) ? true : false;
 }
 
+static int compfiles(struct file fone, struct file ftwo)
+{
+    struct list_head *lone = fone.lines;
+    struct list_head *ltwo = ftwo.lines;
+
+    /* TODO advance in files in different styles */
+    strcmp(lone->payload, ltwo->payload);
+
+    return 0;
+}
+
 int main(int argc, char *argv[])
 {
     int retval = 0;
@@ -58,12 +69,10 @@ int main(int argc, char *argv[])
 
     for (unsigned int i = 0; i < argc - 2; i++) {
         for (unsigned int j = i + 1; j < argc - 1; j++) {
-            char *lone = files[i].lines->payload;
-            char *ltwo = files[j].lines->payload;
+            struct file fone = files[i];
+            struct file ftwo = files[j];
 
-            if (strcmp(lone, ltwo)) {
-                /* TODO advance in lines */
-            }
+            compfiles(fone, ftwo);
         }
     }
 
