@@ -9,8 +9,6 @@
 #define STD_BUFSIZE 256 /* max length of lines */
 #define SEARCH_LEN 10 /* how many lines we will look ahead for insertions */
 
-#define MAX(x,y) (x >= y ? x : y)
-
 struct file {
     FILE *fp;
     struct list_head *lines;
