@@ -50,7 +50,7 @@ static void printline(char *left, char *right)
     fputs("\n", stdout);
 }
 
-static int compfiles(struct file fone, struct file ftwo)
+static void compfiles(struct file fone, struct file ftwo)
 {
     struct list_head *lone = fone.lines;
     struct list_head *ltwo = ftwo.lines;
@@ -111,10 +111,6 @@ static int compfiles(struct file fone, struct file ftwo)
             }
         }
     }
-
-    puts("\n");
-
-    return 0;
 }
 
 int main(int argc, char *argv[])
