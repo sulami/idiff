@@ -8,6 +8,14 @@
 
 #define STD_BUFSIZE 256 /* max length of lines */
 #define SEARCH_LEN 10 /* how many lines we will look ahead for insertions */
+#define USE_COLOUR 1 /* use colours */
+
+#if USE_COLOUR
+#define CL_DEFAULT "\033[0m"
+#define CL_RED     "\033[91m"
+#define CL_GREEN   "\033[92m"
+#define CL_YELLOW  "\033[93m"
+#endif
 
 struct file {
     FILE *fp;
@@ -37,10 +45,19 @@ static void printline(char *left, char *right)
     fputs(" ", stdout);
 
     if (left) {
+#if USE_COLOUR
+        if (right)
+            fputs(CL_YELLOW, stdout);
+        else
+            fputs(CL_RED, stdout);
+#endif
         l = strlen(left);
         if (l && left[l-1] == '\n')
             left[l-1] = ' ';
         fputs(left, stdout);
+#if USE_COLOUR
+        fputs(CL_DEFAULT, stdout);
+#endif
     }
 
     for (unsigned int i = 0; i < w.ws_col / 2 - l - 2; i++)
@@ -48,10 +65,19 @@ static void printline(char *left, char *right)
     fputs("| ", stdout);
 
     if (right) {
+#if USE_COLOUR
+        if (left)
+            fputs(CL_YELLOW, stdout);
+        else
+            fputs(CL_GREEN, stdout);
+#endif
         l = strlen(right);
         if (l && right[l-1] == '\n')
             right[l-1] = ' ';
         fputs(right, stdout);
+#if USE_COLOUR
+        fputs(CL_DEFAULT, stdout);
+#endif
     }
 
     fputs("\n", stdout);
