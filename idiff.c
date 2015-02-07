@@ -60,9 +60,17 @@ static void printline(char *left, char *right)
 #endif
     }
 
-    for (unsigned int i = 0; i < w.ws_col / 2 - l - 2; i++)
-        fputs(" ", stdout);
-    fputs("| ", stdout);
+    if (l && l <= w.ws_col / 2 - 2) {
+        for (unsigned int i = 0; i < w.ws_col / 2 - 2 - l; i++)
+            fputs(" ", stdout);
+        fputs("| ", stdout);
+    } else {
+        if (l)
+            fputs("\n", stdout);
+        for (unsigned int i = 0; i < w.ws_col / 2 - 2; i++)
+            fputs(" ", stdout);
+        fputs("| ", stdout);
+    }
 
     if (right) {
 #if USE_COLOUR
