@@ -1,11 +1,4 @@
-#include <errno.h>
-#include <stdlib.h>
-
-struct list_head {
-    struct list_head *prev;
-    struct list_head *next;
-    void *payload;
-};
+#include "list.h"
 
 struct list_head *list_add(struct list_head *root, void *payload)
 {
@@ -30,7 +23,7 @@ struct list_head *list_add(struct list_head *root, void *payload)
 struct list_head *list_remove(struct list_head *root, struct list_head *rm)
 {
     if (!root || !rm)
-        return NULL;
+        return root;
 
     if (rm->payload)
         free(rm->payload);
@@ -62,9 +55,8 @@ struct list_head *list_remove(struct list_head *root, struct list_head *rm)
 
 void list_delete(struct list_head *root)
 {
-    while (root) {
+    while (root)
         root = list_remove(root, root);
-    }
 }
 
 unsigned int list_length(struct list_head *root)
@@ -79,5 +71,14 @@ unsigned int list_length(struct list_head *root)
         count++;
 
     return count;
+}
+
+struct list_head *list_find(struct list_head *root, void *target)
+{
+    struct list_head *l;
+
+    for(l = root; l->next && l->payload != target; l = l->next);
+
+    return l->payload == target ? l : NULL;
 }
 
